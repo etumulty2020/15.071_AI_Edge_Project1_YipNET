@@ -1,0 +1,15 @@
+# Packages for the YipNET app only (demo_app/app.py). START_YipNET_Windows.bat / START_YipNET_Mac.command install
+# these automatically into a private folder in your user account. Versions are the ones the app was tested with.
+# Python 3.11 to 3.14 on Windows or an Apple-silicon Mac (ai-edge-litert has no Intel-Mac build).
+# For the notebook (YipNET.ipynb), use requirements.txt instead.
+birdnet==1.4.0
+ai-edge-litert==2.3.0
+numpy==2.5.3
+pandas==3.1.1
+scikit-learn==1.9.1
+scipy==1.18.1
+soundfile==0.14.0
+librosa==1.0.0
+openpyxl==3.1.5
+cloudpickle==3.1.2
+flask==3.1.3

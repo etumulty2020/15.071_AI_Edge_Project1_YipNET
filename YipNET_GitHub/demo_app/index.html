@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YipNET</title>
+<style>
+:root {
+  --forest: #2E4A36; --ink: #1F2A22; --sage: #6E8B4E; --brown: #7A5A3E; --amber: #B8732F;
+  --pale: #EEF2EA; --mist: #C9D6BE; --slate: #5E6B62; --line: #D7DECF; --white: #FFFFFF;
+  --head: Cambria, "Cambria Math", Georgia, "Times New Roman", serif;
+  --body: Calibri, Carlito, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--white); color: var(--ink); font-family: var(--body); font-size: 15px; }
+h1, h2, h3 { font-family: var(--head); color: var(--forest); margin: 0; font-weight: 700; }
+button { font-family: var(--body); }
+
+/* header */
+.top { background: var(--forest); color: var(--white); padding: 22px 32px 0; }
+.top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.top h1 { color: var(--white); font-size: 30px; }
+.top .sub { margin-top: 4px; font-size: 14px; color: #DCE5D6; }
+.top .rule { height: 6px; background: var(--sage); margin-top: 18px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 13px;
+        background: rgba(255,255,255,.12); color: var(--white); white-space: nowrap; }
+.pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--amber); }
+.pill.ready .dot { background: #9DC07A; }
+.pill.error .dot { background: #E07A5F; }
+.pill .dot.pulse { animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+
+main { max-width: 1280px; margin: 0 auto; padding: 24px 32px 48px; }
+section { margin-top: 28px; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+                 border-bottom: 3px solid var(--forest); padding-bottom: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.section-title h2 { font-size: 22px; }
+.section-title .note { color: var(--slate); font-size: 13px; }
+
+/* drop zone */
+.drop { border: 2px dashed var(--mist); background: var(--pale); border-radius: 8px; padding: 30px 20px; text-align: center;
+        transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--sage); background: #E3EBDD; }
+.drop .big { font-family: var(--head); font-size: 20px; color: var(--forest); }
+.drop .small { color: var(--slate); margin-top: 6px; font-size: 14px; }
+.drop .buttons { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--forest); background: var(--white); color: var(--forest); padding: 8px 16px; border-radius: 6px;
+       font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn:hover { background: var(--pale); }
+.btn.solid { background: var(--forest); color: var(--white); }
+.btn.solid:hover { background: var(--ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--forest); background: var(--white);
+            color: var(--forest); font-size: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.icon-btn:hover { background: var(--pale); }
+.icon-btn:disabled { opacity: .35; cursor: default; }
+
+/* progress */
+.progress { margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: none; }
+.progress.show { display: block; }
+.bar { height: 14px; background: var(--pale); border-radius: 7px; overflow: hidden; border: 1px solid var(--mist); }
+.bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--sage), var(--forest)); transition: width .3s; }
+.progress .line { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 14px; flex-wrap: wrap; }
+.progress .stage { font-weight: 600; color: var(--forest); }
+.progress .muted { color: var(--slate); }
+.errorbox { color: #8C3B2E; background: #FBEDE7; border: 1px solid #E8C4B6; border-radius: 6px; padding: 10px 12px; margin-top: 10px; display: none; }
+
+/* summary */
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--forest); color: var(--white); border-radius: 8px; padding: 14px 14px 12px; }
+.kpi .v { font-family: var(--head); font-size: 28px; color: #DCE5D6; line-height: 1.1; }
+.kpi .k { font-size: 13px; margin-top: 4px; color: var(--white); }
+.kpi .s { font-size: 12px; margin-top: 2px; color: var(--mist); }
+.tables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--white); }
+.card h3 { font-size: 16px; margin-bottom: 4px; }
+.card .cnote { color: var(--slate); font-size: 12.5px; margin-bottom: 8px; }
+table.small { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.small th { text-align: right; font-weight: 600; color: var(--forest); border-bottom: 1px solid var(--mist); padding: 4px 6px; }
+table.small th:first-child, table.small td:first-child { text-align: left; }
+table.small td { text-align: right; padding: 4px 6px; border-bottom: 1px solid #EEF0EC; font-variant-numeric: tabular-nums; }
+table.small tr.total td { font-weight: 600; border-top: 1px solid var(--mist); }
+
+/* clip viewer */
+.viewer-nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.viewer-nav .count { font-weight: 600; color: var(--forest); min-width: 92px; text-align: center; }
+.viewer-nav .file { font-family: var(--head); font-size: 18px; color: var(--ink); overflow-wrap: anywhere; }
+.viewer-nav .len { color: var(--slate); font-size: 14px; }
+.viewer { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; margin-top: 12px; }
+.facts { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--pale); align-self: start; }
+.facts .label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--slate); margin-top: 12px; }
+.facts .label:first-child { margin-top: 0; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.chip { color: var(--white); border-radius: 999px; padding: 3px 11px; font-size: 14px; font-weight: 600; }
+.conf { font-family: var(--head); font-size: 40px; color: var(--forest); line-height: 1.05; margin-top: 2px; }
+.conf small { font-family: var(--body); font-size: 13px; color: var(--slate); margin-left: 6px; }
+.warn { display: inline-block; margin-top: 4px; background: #F6E7D6; color: #6F4219; border: 1px solid #E5C49E; border-radius: 6px;
+        padding: 3px 8px; font-size: 13.5px; }
+.okline { margin-top: 4px; color: var(--slate); font-size: 14px; }
+.fact { font-size: 14.5px; margin-top: 3px; }
+.chances { margin-top: 6px; display: grid; grid-template-columns: 62px 1fr 38px; gap: 5px 8px; align-items: center; font-size: 13.5px; }
+.chances .nm.on { font-weight: 700; }
+.cbar { position: relative; height: 12px; background: var(--white); border: 1px solid var(--mist); border-radius: 3px; }
+.cbar > div { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; }
+.cbar > i { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: .55; }
+.chances .pc { text-align: right; font-variant-numeric: tabular-nums; }
+.plot { border: 1px solid var(--line); border-radius: 8px; padding: 10px 10px 6px; min-width: 0; }
+.plot-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.plot-head .t { color: var(--slate); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.plot canvas { width: 100%; display: block; cursor: crosshair; }
+.readout { min-height: 20px; font-size: 13px; color: var(--slate); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--slate); margin-top: 4px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 10px; border-radius: 2px; display: inline-block; }
+.times { margin-top: 10px; display: grid; grid-template-columns: 150px 1fr; gap: 4px 10px; font-size: 14px; }
+.times .k { color: var(--slate); }
+
+/* full results table */
+.table-wrap { overflow: auto; max-height: 520px; border: 1px solid var(--line); border-radius: 8px; }
+table.results { border-collapse: separate; border-spacing: 0; font-size: 13.5px; min-width: 100%; }
+table.results th { position: sticky; top: 0; background: var(--forest); color: var(--white); font-weight: 600; text-align: left;
+                   padding: 8px 10px; white-space: nowrap; cursor: pointer; z-index: 2; border-right: 1px solid #3C5C45; }
+table.results th .arrow { opacity: .7; margin-left: 4px; }
+table.results td { padding: 7px 10px; border-bottom: 1px solid #E9EDE5; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.results td.wrap { white-space: normal; min-width: 240px; }
+table.results td.num { text-align: right; }
+table.results th:first-child, table.results td:first-child { position: sticky; left: 0; z-index: 1; }
+table.results th:first-child { z-index: 3; }
+table.results td:first-child { background: var(--white); font-weight: 600; }
+table.results tr:nth-child(even) td { background: #F7F9F5; }
+table.results tr:hover td { background: #E9F0E3; cursor: pointer; }
+table.results tr.current td { background: #DCE7D3 !important; }
+.lowconf { color: #8C3B2E; font-weight: 600; }
+.hidden { display: none !important; }
+footer { color: var(--slate); font-size: 12.5px; border-top: 1px solid var(--line); margin-top: 36px; padding-top: 10px; }
+
+@media (max-width: 900px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tables { grid-template-columns: minmax(0, 1fr); }
+  .viewer { grid-template-columns: minmax(0, 1fr); }
+  main, .top { padding-left: 16px; padding-right: 16px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <div>
+      <h1>YipNET: coyote call classifier</h1>
+      <div class="sub">Every clip's best guess of its sounds, with an honest confidence · 15.071 The AI Edge · Project 1 · for a wildlife research group studying coyotes in the Northeast US</div>
+    </div>
+    <div id="pill" class="pill"><span class="dot pulse"></span><span id="pillText">Connecting</span></div>
+  </div>
+  <div class="rule"></div>
+</header>
+
+<main>
+  <section style="margin-top:0">
+    <div id="drop" class="drop">
+      <div class="big">Drop WAV recordings or a whole folder here</div>
+      <div class="small">Each clip goes through BirdNET and the trained model; nothing leaves this computer.</div>
+      <div class="buttons">
+        <button class="btn solid" id="pickFiles">Choose files</button>
+        <button class="btn" id="pickFolder">Choose a folder</button>
+      </div>
+      <input id="fileInput" type="file" accept=".wav,audio/wav,audio/x-wav" multiple hidden>
+      <input id="folderInput" type="file" webkitdirectory directory multiple hidden>
+    </div>
+    <div id="progress" class="progress">
+      <div class="bar"><div id="barFill"></div></div>
+      <div class="line"><span><span id="stage" class="stage"></span> <span id="stageDetail" class="muted"></span></span>
+        <span id="timing" class="muted"></span></div>
+    </div>
+    <div id="errorBox" class="errorbox"></div>
+  </section>
+
+  <section id="summarySection" class="hidden">
+    <div class="section-title"><h2>Batch summary</h2><span class="note" id="summaryNote"></span></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="tables" id="summaryTables"></div>
+  </section>
+
+  <section id="viewerSection" class="hidden">
+    <div class="section-title"><h2>Clip by clip</h2>
+      <span class="note">Least confident first, as reviewers would check them · ← → keys to move, space to play</span></div>
+    <div class="viewer-nav">
+      <button class="icon-btn" id="prev" title="Previous clip">‹</button>
+      <span class="count" id="count"></span>
+      <button class="icon-btn" id="next" title="Next clip">›</button>
+      <span class="file" id="fileName"></span>
+      <span class="len" id="fileLen"></span>
+    </div>
+    <div class="viewer">
+      <div class="facts" id="facts"></div>
+      <div class="plot">
+        <div class="plot-head">
+          <button class="icon-btn" id="play" title="Play / pause">▶</button>
+          <span class="t" id="clock">0:00.0</span>
+          <span class="t" id="specNote"></span>
+        </div>
+        <canvas id="canvas" height="470"></canvas>
+        <div class="readout" id="readout">Hover over the picture to read each 3-second chunk; click to play from there.</div>
+        <div class="legend" id="legend"></div>
+        <div class="times" id="times"></div>
+      </div>
+    </div>
+    <audio id="audio" preload="auto"></audio>
+  </section>
+
+  <section id="tableSection" class="hidden">
+    <div class="section-title"><h2>All results</h2>
+      <span class="note"><span id="tableNote"></span> <button class="btn solid" id="download" style="margin-left:10px">Download the spreadsheet</button></span></div>
+    <div class="table-wrap"><table class="results" id="results"></table></div>
+  </section>
+
+  <footer id="footer">Model: the final best-guess models of YipNET.ipynb (Section 8), on BirdNET v2.4 (Cornell Lab of Ornithology, CC BY-NC-SA 4.0).</footer>
+</main>
+
+<script>
+'use strict';
+const COLORS = { 'Howl': '#2E4A36', 'Bark': '#B8732F', 'Yip-Yap': '#7A5A3E', 'Chorus': '#6E8B4E',
+                 'Whine': '#4F7F86', 'Growl': '#8C3B2E', 'Group': '#5E6B62' };
+const S = { tags: ['Howl', 'Bark', 'Yip-Yap', 'Chorus', 'Whine', 'Growl', 'Group'], cutoffs: {}, ready: false,
+            files: new Map(), job: null, columns: [], rows: [], details: [], ids: [], order: [], pos: 0,
+            sort: null, spec: new Map(), url: null };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const mmss = t => { t = Math.max(0, t); const m = Math.floor(t / 60), s = t - 60 * m; return `${m}:${s.toFixed(1).padStart(4, '0')}`; };
+const hm = sec => { const m = Math.round(sec / 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
+const dur = sec => { sec = Math.round(sec); if (sec < 60) return `${sec} s`; const m = Math.round(sec / 60); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`; };
+const pct = (x, d = 0) => x == null ? '–' : `${(100 * x).toFixed(d)}%`;
+const num = (x, d = 0) => x == null ? '–' : Number(x).toFixed(d);
+
+/* ---------- model status ---------- */
+async function pollStatus() {
+  try {
+    const st = await (await fetch('/api/status')).json();
+    if (st.tags) S.tags = st.tags;
+    if (st.cutoffs) S.cutoffs = st.cutoffs;
+    const pill = $('pill'), dot = pill.querySelector('.dot');
+    pill.className = 'pill' + (st.state === 'ready' ? ' ready' : st.state === 'error' ? ' error' : '');
+    dot.classList.toggle('pulse', !['ready', 'error'].includes(st.state));
+    if (st.state === 'ready') {
+      const c = st.check;
+      $('pillText').textContent = c && c.ok ? 'Model ready · matches the notebook' : c && c.ok === false ? 'Model ready · differs from the notebook' : 'Model ready';
+      S.ready = true;
+      $('footer').innerHTML = `Model: the final best-guess models of <b>YipNET.ipynb</b> (Section 8), trained on ${st.training_clips} labeled clips, saved ${esc(st.saved)}; BirdNET v2.4 (Cornell Lab of Ornithology, CC BY-NC-SA 4.0) as a frozen encoder. `
+        + (c && c.ok ? `Start-up check: on the ${c.clips} made-up sounds the app gives exactly the notebook's answers in all ${c.columns} columns.`
+           : c && c.ok === false ? `<span class="lowconf">Start-up check: the app differs from the notebook (${esc(c.problems.join('; '))}).</span>` : esc(c && c.note || ''));
+      return;
+    }
+    $('pillText').textContent = st.state === 'error' ? 'Model not loaded' : st.message + '…';
+    if (st.state === 'error') { showError(st.error); return; }
+  } catch (e) { $('pillText').textContent = 'Waiting for the app'; }
+  setTimeout(pollStatus, 800);
+}
+
+/* ---------- picking files ---------- */
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => e.preventDefault());
+drop.addEventListener('drop', async e => {
+  const items = [...(e.dataTransfer.items || [])];
+  const entries = items.map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  const files = entries.length ? (await Promise.all(entries.map(walk))).flat() : [...e.dataTransfer.files];
+  start(files);
+});
+async function walk(entry) {
+  if (entry.isFile) return new Promise(res => entry.file(f => res([f]), () => res([])));
+  if (!entry.isDirectory) return [];
+  const reader = entry.createReader(), out = [];
+  for (;;) {
+    const batch = await new Promise(res => reader.readEntries(res, () => res([])));
+    if (!batch.length) break;
+    for (const child of batch) out.push(...await walk(child));
+  }
+  return out;
+}
+$('pickFiles').onclick = () => $('fileInput').click();
+$('pickFolder').onclick = () => $('folderInput').click();
+$('fileInput').onchange = e => { start([...e.target.files]); e.target.value = ''; };
+$('folderInput').onchange = e => { start([...e.target.files]); e.target.value = ''; };
+
+/* ---------- running a batch ---------- */
+function showError(msg) { const b = $('errorBox'); b.textContent = msg; b.style.display = msg ? 'block' : 'none'; }
+function setBar(frac, stage, detail, timing) {
+  $('progress').classList.add('show');
+  $('barFill').style.width = `${Math.round(100 * Math.min(1, frac))}%`;
+  $('stage').textContent = stage; $('stageDetail').textContent = detail || ''; $('timing').textContent = timing || '';
+}
+function start(all) {
+  showError('');
+  const wavs = all.filter(f => /\.wav$/i.test(f.name));
+  if (!wavs.length) { showError('No WAV files found in what was dropped.'); return; }
+  if (S.job) { showError('A batch is already running; wait for it to finish.'); return; }
+  S.files = new Map(); S.spec = new Map();
+  const form = new FormData();
+  wavs.forEach((f, i) => { const id = `f${i}`; S.files.set(id, f); form.append('files', f, f.name); form.append('ids', id); });
+  const skipped = all.length - wavs.length;
+  setBar(0, 'Uploading', `${wavs.length} clip${wavs.length > 1 ? 's' : ''}` + (skipped ? ` (${skipped} non-WAV file${skipped > 1 ? 's' : ''} skipped)` : ''), '');
+  ['pickFiles', 'pickFolder'].forEach(id => $(id).disabled = true);
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/analyze');
+  xhr.upload.onprogress = e => e.lengthComputable && setBar(0.05 * e.loaded / e.total, 'Uploading', `${wavs.length} clips`, '');
+  xhr.onload = () => {
+    const r = JSON.parse(xhr.responseText || '{}');
+    if (xhr.status !== 200) { finish(); showError(r.error || 'Upload failed'); return; }
+    S.job = r.job; S.n = r.clips; S.t0 = Date.now(); pollJob();
+  };
+  xhr.onerror = () => { finish(); showError('Could not reach the app. Is it still running?'); };
+  xhr.send(form);
+}
+function finish() { S.job = null; ['pickFiles', 'pickFolder'].forEach(id => $(id).disabled = false); }
+async function pollJob() {
+  let j;
+  try { j = await (await fetch(`/api/job/${S.job}`)).json(); } catch (e) { setTimeout(pollJob, 800); return; }
+  const n = S.n;
+  if (j.state === 'error') { finish(); setBar(0, 'Stopped', ''); showError(j.error); return; }
+  if (j.state === 'queued' || j.state === 'waiting') {
+    setBar(0.05, j.stage || 'Waiting for the model', '', `${Math.round((Date.now() - S.t0) / 1000)} s`);
+    setTimeout(pollJob, 500); return;
+  }
+  const frac = 0.05 + 0.95 * (j.done / j.total);
+  let detail = '';
+  if (j.stage === 'BirdNET') detail = `clip ${Math.min(n, j.done + 1)} of ${n} · ${j.current}`;
+  else if (j.stage.startsWith('Sound times')) detail = `clip ${Math.min(n, j.done - n + 1)} of ${n} · ${j.current}`;
+  const el = j.elapsed || 0;
+  const left = j.done > 0 && j.done < j.total ? ` · about ${Math.max(1, Math.round(el / j.done * (j.total - j.done)))} s left` : '';
+  setBar(frac, j.stage === 'BirdNET' ? 'Listening with BirdNET' : j.stage, detail, `${Math.round(el)} s elapsed${left}`);
+  if (j.state !== 'done') { setTimeout(pollJob, 400); return; }
+  setBar(1, 'Done', `${n} clip${n > 1 ? 's' : ''} analyzed`, `${Math.round(el)} s`);
+  S.columns = j.columns; S.rows = j.rows; S.details = j.details; S.ids = j.ids; S.sheet = j.sheet; S.doneJob = S.job;
+  S.order = S.rows.map((_, i) => i); S.sort = null; S.pos = 0;
+  finish();
+  renderSummary(j.summary);
+  renderTable();
+  $('viewerSection').classList.remove('hidden');
+  show(0);
+  $('viewerSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('download').onclick = () => { if (S.doneJob) location.href = `/api/job/${S.doneJob}/sheet`; };
+
+/* ---------- summary ---------- */
+function table(head, rows, totalLast = false) {
+  return `<table class="small"><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr>` +
+    rows.map((r, i) => `<tr class="${totalLast && i === rows.length - 1 ? 'total' : ''}">${r.map(c => `<td>${c ?? '–'}</td>`).join('')}</tr>`).join('') + '</table>';
+}
+function card(title, note, html) { return `<div class="card"><h3>${esc(title)}</h3><div class="cnote">${esc(note)}</div>${html}</div>`; }
+function renderSummary(s) {
+  const sec = $('summarySection');
+  if (!s) { sec.classList.add('hidden'); return; }
+  sec.classList.remove('hidden');
+  const o = s.overview, L = s.listening, n = o.clips;
+  $('summaryNote').textContent = `${n} clips · the same numbers as the spreadsheet's Summary tab`;
+  const kpi = (v, k, sub) => `<div class="kpi"><div class="v">${v}</div><div class="k">${k}</div>${sub ? `<div class="s">${sub}</div>` : ''}</div>`;
+  $('kpis').innerHTML = kpi(n, 'Clips analyzed', `${dur(L.total_s)} of audio`)
+    + kpi(`${num(o.confidence.mean)}%`, 'Mean confidence', `median ${num(o.confidence.median)}%`)
+    + kpi(o.conf80, 'Clips at 80%+ confidence', pct(o.conf80 / n))
+    + kpi(o.conf50, 'Clips below 50% confidence', pct(o.conf50 / n))
+    + kpi(o.warning, 'Clips with a warning', `${o.no_coyote} with no coyote heard`)
+    + kpi(dur((L.top50.pct || 0) * L.total_s), 'To hear the least sure half', `${L.top50.clips} clips · ${pct(L.top50.pct)} of the audio`);
+  const st = x => x ? [num(x.mean, 1), num(x.median, 1), num(x.min, 1), num(x.max, 1)] : ['–', '–', '–', '–'];
+  const c = o.confidence;
+  const cards = [];
+  cards.push(card('1. Batch overview', 'How many clips, how many need a listen, and how sure the model is.',
+    table(['', 'Clips', '% of clips'], [['Clips', n, ''], ['Clips with a warning', o.warning, pct(o.warning / n, 1)],
+      ['Clips with no coyote heard', o.no_coyote, pct(o.no_coyote / n, 1)], ['Clips at 80%+ confidence', o.conf80, pct(o.conf80 / n, 1)],
+      ['Clips below 50% confidence', o.conf50, pct(o.conf50 / n, 1)]])
+    + '<div style="height:8px"></div>' + table(['Confidence', 'Mean', 'Median', 'Min', 'Max'],
+      [['All clips', `${num(c.mean, 1)}%`, `${num(c.median, 1)}%`, `${num(c.min, 0)}%`, `${num(c.max, 0)}%`]])));
+  cards.push(card('2. Clip length and listening time', 'The sheet is sorted least confident first: checking its top rows covers the least confident clips.',
+    table(['', 'Hours', 'Time', 'Seconds'], [['Total clip length', num(L.total_h, 2), L.total_hm, num(L.total_s, 1)]])
+    + '<div style="height:8px"></div>' + table(['Clip length (s)', 'Mean', 'Median', 'Min', 'Max'], [['Seconds', ...st(L.length)]])
+    + '<div style="height:8px"></div>' + table(['To check', 'Clips', 'Time', '% of time'], [
+      ['Least confident 20% of clips', L.top20.clips, L.top20.time, pct(L.top20.pct, 1)],
+      ['Least confident 50% of clips', L.top50.clips, L.top50.time, pct(L.top50.pct, 1)],
+      ['All clips', n, L.total_hm, '100.0%'], ['Clips with a warning', L.warning.clips, L.warning.time, pct(L.warning.pct, 1)]])));
+  cards.push(card('3. Confidence bands', 'How many clips fall in each confidence band, and how long they take to hear.',
+    table(['Confidence band', 'Clips', '% of clips', 'Mean confidence', 'Total length'],
+      [...s.bands.map(b => [b.band, b.clips, pct(b.pct, 1), b.confidence == null ? '–' : `${num(b.confidence, 1)}%`, b.time]),
+       ['All clips', n, '100.0%', `${num(c.mean, 1)}%`, L.total_hm]], true)));
+  cards.push(card('4. Best guesses', 'Each distinct mix of sounds the model guessed, most common first.',
+    table(['Best guess', 'Clips', '% of clips', 'Mean confidence'], s.mixes.map(m => [chipsHtml(m.mix, true), m.clips, pct(m.pct, 1), `${num(m.confidence, 1)}%`]))));
+  cards.push(card('5. Each sound', 'Mean chance over all clips; clips at 50% or more; best guesses that include it.',
+    table(['Sound', 'Mean chance', 'Clips at 50%+', 'In best guess'], s.sounds.map(x => [`<span class="sw" style="background:${COLORS[x.sound]}"></span> ${x.sound}`, `${num(x.mean, 1)}%`, x.n50, x.guessed]))));
+  const h = s.howl;
+  cards.push(card('6. Longest howl', 'Clips whose best guess has a howl; measured with a pitch tracker, so approximate.',
+    table(['', 'Clips'], [['Clips whose best guess has a howl', h.guessed], ['Howls measured', h.measured],
+      ['Howl guessed, none measured', h.none], ['"No howl detected"', h.no_howl],
+      ['Longest howl at least 5 s', h.atleast['5']], ['Longest howl at least 10 s', h.atleast['10']], ['Longest howl at least 20 s', h.atleast['20']]])
+    + '<div style="height:8px"></div>' + table(['', 'Mean', 'Median', 'Min', 'Max'],
+      [['Longest howl (s)', ...st(h.seconds)], ['Pitch (Hz)', ...(h.pitch ? [num(h.pitch.mean), num(h.pitch.median), num(h.pitch.min), num(h.pitch.max)] : ['–', '–', '–', '–'])]])));
+  cards.push(card('7. Warnings', 'Clips that failed a review check; these always need a listen.',
+    table(['Warning', 'Clips', 'Total length'], s.warnings.map(w => [w.warning, w.clips, w.time]), true)));
+  cards.push(card('8. Review progress', 'Fills in on the downloaded spreadsheet as reviewers type in the Corrected tag column.',
+    '<div class="cnote" style="margin:0">Download the spreadsheet, correct the least confident clips first, then run learn_from_corrections in the notebook.</div>'));
+  $('summaryTables').innerHTML = cards.join('');
+}
+
+/* ---------- full table ---------- */
+const NUMERIC = c => /\(%\)$|\(s\)$|\(Hz\)$/.test(c);
+function cell(c, v) {
+  if (v == null || v === '') return '';
+  if (c === 'Best guess') return chipsHtml(v, true);
+  if (c === 'Confidence (%)') return `<span class="${v < 50 ? 'lowconf' : ''}">${num(v)}%</span>`;
+  if (/chance \(%\)$/.test(c)) return `${num(v)}%`;
+  if (c === 'Warning') return `<span class="warn" style="margin:0">${esc(v)}</span>`;
+  return esc(v);
+}
+function renderTable() {
+  $('tableSection').classList.remove('hidden');
+  $('tableNote').textContent = `${S.rows.length} clip${S.rows.length > 1 ? 's' : ''} · every column of the best-guess spreadsheet · click a row to view it · click a header to sort`;
+  const wrapCols = c => c.startsWith('Sound times') || c === 'Least sure part' || c === 'Warning';
+  let html = '<thead><tr>' + S.columns.map((c, k) => `<th data-k="${k}">${esc(c)}${S.sort && S.sort.k === k ? `<span class="arrow">${S.sort.dir > 0 ? '▲' : '▼'}</span>` : ''}</th>`).join('') + '</tr></thead><tbody>';
+  html += S.order.map((i, p) => `<tr data-p="${p}" class="${p === S.pos ? 'current' : ''}">` + S.columns.map(c =>
+    `<td class="${NUMERIC(c) ? 'num' : ''} ${wrapCols(c) ? 'wrap' : ''}">${cell(c, S.rows[i][c])}</td>`).join('') + '</tr>').join('');
+  $('results').innerHTML = html + '</tbody>';
+  $('results').querySelectorAll('th').forEach(th => th.onclick = () => sortBy(+th.dataset.k));
+  $('results').querySelectorAll('tbody tr').forEach(tr => tr.onclick = () => { show(+tr.dataset.p); $('viewerSection').scrollIntoView({ behavior: 'smooth' }); });
+}
+function sortBy(k) {
+  const c = S.columns[k], cur = S.order[S.pos];
+  S.sort = S.sort && S.sort.k === k ? { k, dir: -S.sort.dir } : { k, dir: 1 };
+  const key = v => (v == null || v === '') ? null : (typeof v === 'number' ? v : String(v));
+  S.order.sort((a, b) => {
+    const x = key(S.rows[a][c]), y = key(S.rows[b][c]);
+    if (x === y) return a - b; if (x === null) return 1; if (y === null) return -1;
+    if (typeof x === 'number' && typeof y === 'number') return S.sort.dir * (x - y);
+    return S.sort.dir * String(x).localeCompare(String(y), undefined, { numeric: true });
+  });
+  S.pos = S.order.indexOf(cur);
+  renderTable(); updateNav();
+}
+
+/* ---------- one clip ---------- */
+function chipsHtml(mix, small) {
+  return `<span class="chips" style="margin:0;display:inline-flex;${small ? 'flex-wrap:nowrap' : ''}">` + String(mix).split(' + ').map(t =>
+    `<span class="chip" style="background:${COLORS[t] || '#5E6B62'};${small ? 'font-size:12.5px;padding:1px 9px' : ''}">${esc(t)}</span>`).join('') + '</span>';
+}
+function parseClock(s) { const [m, sec] = String(s).split(':').map(Number); return 60 * m + sec; }
+function parseTimes(text) {
+  const out = {};
+  if (!text) return out;
+  for (const part of String(text).split('; ')) {
+    const sp = part.indexOf(' '); const tag = part.slice(0, sp); let rest = part.slice(sp + 1);
+    const strongest = rest.endsWith('(strongest)'); rest = rest.replace(' (strongest)', '');
+    out[tag] = rest.split(', ').map(r => { const [a, b] = r.split('-'); return { a: parseClock(a), b: parseClock(b), strongest }; });
+  }
+  return out;
+}
+function updateNav() {
+  const n = S.order.length;
+  $('count').textContent = `Clip ${S.pos + 1} of ${n}`;
+  $('prev').disabled = S.pos <= 0; $('next').disabled = S.pos >= n - 1;
+  document.querySelectorAll('#results tbody tr').forEach(tr => tr.classList.toggle('current', +tr.dataset.p === S.pos));
+}
+$('prev').onclick = () => show(S.pos - 1);
+$('next').onclick = () => show(S.pos + 1);
+document.addEventListener('keydown', e => {
+  if ($('viewerSection').classList.contains('hidden') || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowLeft' && S.pos > 0) { e.preventDefault(); show(S.pos - 1); }
+  if (e.key === 'ArrowRight' && S.pos < S.order.length - 1) { e.preventDefault(); show(S.pos + 1); }
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+});
+
+function show(p) {
+  if (p < 0 || p >= S.order.length) return;
+  S.pos = p; updateNav();
+  const i = S.order[p], r = S.rows[i], d = S.details[i], file = S.files.get(S.ids[i]);
+  const T = S.tags, strictCol = S.columns.find(c => c.includes('50% sure')), looseCol = S.columns.find(c => c.includes('30% sure'));
+  S.cur = { i, r, d, file, strict: parseTimes(r[strictCol]), loose: parseTimes(r[looseCol]),
+            inGuess: new Set(String(r['Best guess']).split(' + ')), duration: r['Clip length (s)'] || 0, img: null };
+  $('readout').textContent = 'Hover over the picture to read each 3-second chunk; click to play from there.';
+  $('fileName').textContent = r['File'];
+  $('fileLen').textContent = `${num(r['Clip length (s)'], 1)} s`;
+  const conf = r['Confidence (%)'];
+  const band = conf >= 90 ? '90%+' : conf >= 80 ? '80–90%' : conf >= 70 ? '70–80%' : conf >= 50 ? '50–70%' : conf >= 30 ? '30–50%' : 'below 30%';
+  const howlLen = r['Longest howl (s)'];
+  const howlText = typeof howlLen === 'number'
+    ? `<b>${num(howlLen, 1)} s</b>, starts ${esc(r['Longest howl starts'])}, pitch <b>${esc(r['Longest howl pitch (Hz)'])} Hz</b>` : esc(howlLen);
+  $('facts').innerHTML =
+    `<div class="label">Best guess</div><div class="chips">${chipsHtml(r['Best guess'])}</div>`
+    + `<div class="label">Confidence</div><div class="conf">${num(conf)}%<small>band ${band}</small></div>`
+    + `<div class="fact" style="color:var(--slate)">The chance the whole mix is exactly right.</div>`
+    + `<div class="label">Least sure part</div><div class="fact">${esc(r['Least sure part'])}</div>`
+    + `<div class="label">Warning</div>` + (r['Warning'] ? `<span class="warn">${esc(r['Warning'])}</span>` : `<div class="okline">None: the clip passed the review checks</div>`)
+    + `<div class="label">Longest howl</div><div class="fact">${howlText}</div>`
+    + `<div class="label">Each sound's chance</div><div class="chances">` + T.map(t => {
+        const v = r[`${t} chance (%)`] || 0, cut = 100 * (S.cutoffs[t] ?? 0.5), on = S.cur.inGuess.has(t);
+        return `<span class="nm ${on ? 'on' : ''}">${t}</span><div class="cbar" title="cutoff ${Math.round(cut)}%"><div style="width:${v}%;background:${COLORS[t]};opacity:${on ? 1 : .45}"></div><i style="left:calc(${cut}% - 1px)"></i></div><span class="pc">${num(v)}%</span>`;
+      }).join('') + `</div><div class="fact" style="color:var(--slate);font-size:12.5px;margin-top:6px">Tick: the sound's cutoff for joining the best guess.</div>`;
+  $('times').innerHTML = `<span class="k">Sound times (50% sure)</span><span>${esc(r[strictCol])}</span>`
+    + `<span class="k">Sound times (30% sure)</span><span>${esc(r[looseCol])}</span>`;
+  $('legend').innerHTML = `<span><span class="sw" style="background:#2E4A36"></span>sound time, 50% sure (sheet)</span>`
+    + `<span><span class="sw" style="border:2px solid #2E4A36;background:#fff"></span>sound time, 30% sure</span>`
+    + `<span><span class="sw" style="background:linear-gradient(90deg,#fff,#6E8B4E)"></span>chance in each 3-s chunk</span>`
+    + `<span><span class="sw" style="background:repeating-linear-gradient(45deg,#E5E8E2 0 3px,#fff 3px 6px)"></span>not a coyote moment (ignored)</span>`
+    + `<span><span class="sw" style="border:2px dashed #B8732F;background:#fff"></span>longest howl / unidentified chunk</span>`;
+  // audio
+  const audio = $('audio'); audio.pause(); $('play').textContent = '▶';
+  if (S.url) URL.revokeObjectURL(S.url);
+  S.url = file ? URL.createObjectURL(file) : null;
+  audio.src = S.url || ''; audio.currentTime = 0;
+  $('specNote').textContent = file ? 'Making the spectrogram…' : '';
+  draw();
+  if (file) spectrogram(S.ids[i], file).then(sp => {
+    if (!S.cur || S.cur.i !== i) return;
+    S.cur.img = sp.canvas; S.cur.duration = sp.duration; $('specNote').textContent = `Spectrogram 0–${sp.fmax / 1000} kHz`; draw();
+  }).catch(err => { $('specNote').textContent = 'This browser could not decode the audio for the spectrogram.'; console.error(err); });
+}
+
+/* ---------- spectrogram (made in the browser from the dropped file) ---------- */
+const SR = 16000, NFFT = 1024, FMAX = 6000;
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) { let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const a = i + k, b = a + len / 2, tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr;
+      }
+    }
+  }
+}
+const RAMP = ['#FFFFFF', '#EEF2EA', '#C9D6BE', '#6E8B4E', '#2E4A36', '#1F2A22'].map(h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)));
+function colour(v) {
+  const x = Math.max(0, Math.min(1, v)) * (RAMP.length - 1), k = Math.min(RAMP.length - 2, Math.floor(x)), f = x - k;
+  return RAMP[k].map((c, j) => Math.round(c + f * (RAMP[k + 1][j] - c)));
+}
+async function spectrogram(id, file) {
+  if (S.spec.has(id)) return S.spec.get(id);
+  const buf = await file.arrayBuffer();
+  const ctx = new OfflineAudioContext(1, 1, SR);
+  const audio = await ctx.decodeAudioData(buf);
+  const x = new Float32Array(audio.length);
+  for (let c = 0; c < audio.numberOfChannels; c++) { const ch = audio.getChannelData(c); for (let i = 0; i < x.length; i++) x[i] += ch[i] / audio.numberOfChannels; }
+  const frames = Math.max(1, Math.min(2400, Math.floor((x.length - NFFT) / 64)));
+  const hop = Math.max(1, (x.length - NFFT) / frames), bins = Math.floor(FMAX / (SR / NFFT));
+  const win = new Float32Array(NFFT).map((_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / NFFT));
+  const db = new Float32Array(frames * bins), re = new Float32Array(NFFT), im = new Float32Array(NFFT);
+  for (let f = 0; f < frames; f++) {
+    const o = Math.floor(f * hop);
+    for (let i = 0; i < NFFT; i++) { re[i] = (x[o + i] || 0) * win[i]; im[i] = 0; }
+    fft(re, im);
+    for (let b = 0; b < bins; b++) db[f * bins + b] = 10 * Math.log10(re[b] * re[b] + im[b] * im[b] + 1e-12);
+    if (f % 200 === 0) await new Promise(r => setTimeout(r));
+  }
+  const sample = Array.from(db.filter((_, k) => k % 7 === 0)).sort((a, b) => a - b);
+  const lo = sample[Math.floor(0.5 * sample.length)], hi = sample[Math.floor(0.998 * (sample.length - 1))];
+  const c = document.createElement('canvas'); c.width = frames; c.height = bins;
+  const g = c.getContext('2d'), img = g.createImageData(frames, bins);
+  for (let f = 0; f < frames; f++) for (let b = 0; b < bins; b++) {
+    const v = Math.pow(Math.max(0, (db[f * bins + b] - lo) / (hi - lo)), 0.9), [r, gg, bb] = colour(v), k = 4 * ((bins - 1 - b) * frames + f);
+    img.data[k] = r; img.data[k + 1] = gg; img.data[k + 2] = bb; img.data[k + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const sp = { canvas: c, duration: audio.duration, fmax: FMAX };
+  S.spec.set(id, sp);
+  return sp;
+}
+
+/* ---------- drawing the clip ---------- */
+const L = { left: 64, right: 12, top: 18, spec: 210, gap: 8, coyote: 30, lane: 19, axis: 26 };
+function layout(W) {
+  const specY = L.top, coyY = specY + L.spec + L.gap, laneY = coyY + L.coyote + 4;
+  const axisY = laneY + L.lane * S.tags.length + 4;
+  return { W, x0: L.left, x1: W - L.right, specY, coyY, laneY, axisY, H: axisY + L.axis };
+}
+function draw() {
+  const cv = $('canvas'), c = S.cur; if (!c) return;
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, P = layout(W);
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(P.H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(P.H * dpr); cv.style.height = `${P.H}px`; }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, P.H);
+  const D = Math.max(0.1, c.duration), X = t => P.x0 + (P.x1 - P.x0) * Math.min(1, Math.max(0, t / D)), cs = c.d.chunk_seconds;
+  g.font = '12px Calibri, Carlito, "Segoe UI", sans-serif'; g.textBaseline = 'middle';
+  // spectrogram
+  g.fillStyle = '#F7F9F5'; g.fillRect(P.x0, P.specY, P.x1 - P.x0, L.spec);
+  if (c.img) { g.imageSmoothingEnabled = true; g.drawImage(c.img, P.x0, P.specY, P.x1 - P.x0, L.spec); }
+  else { g.fillStyle = '#5E6B62'; g.textAlign = 'center'; g.fillText(c.file ? 'Making the spectrogram…' : 'No audio', (P.x0 + P.x1) / 2, P.specY + L.spec / 2); }
+  g.strokeStyle = '#C9D6BE'; g.strokeRect(P.x0 + .5, P.specY + .5, P.x1 - P.x0 - 1, L.spec - 1);
+  g.fillStyle = '#5E6B62'; g.textAlign = 'right';
+  for (let k = 0; k <= FMAX; k += 1000) { const y = P.specY + L.spec * (1 - k / FMAX); g.fillText(`${k / 1000}`, P.x0 - 6, Math.min(P.specY + L.spec - 6, Math.max(P.specY + 6, y))); }
+  g.save(); g.translate(14, P.specY + L.spec / 2); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.fillText('kHz', 0, 0); g.restore();
+  // unidentified chunks
+  g.setLineDash([5, 4]); g.lineWidth = 1.5; g.strokeStyle = '#B8732F';
+  for (const k of c.d.unidentified) { g.strokeRect(X(k * cs) + 1, P.specY + 2, X((k + 1) * cs) - X(k * cs) - 2, L.spec - 4); }
+  g.setLineDash([]);
+  for (const k of c.d.unidentified) { label(g, 'unidentified', X(k * cs) + 4, P.specY + 10, '#B8732F'); }
+  // longest howl
+  const hs = c.r['Longest howl (s)'];
+  if (typeof hs === 'number') {
+    const a = parseClock(c.r['Longest howl starts']), hz = Number(c.r['Longest howl pitch (Hz)']);
+    const xa = X(a), xb = Math.max(xa + 3, X(a + hs)), y = P.specY + L.spec * (1 - Math.min(hz, FMAX) / FMAX);
+    g.strokeStyle = '#B8732F'; g.lineWidth = 2; g.setLineDash([6, 4]);
+    g.strokeRect(xa, Math.max(P.specY + 2, y - 16), xb - xa, 32); g.setLineDash([]);
+    label(g, `longest howl ${hs.toFixed(1)} s · ${hz} Hz`, Math.min(xa, P.x1 - 190), Math.max(P.specY + 10, y - 26), '#B8732F');
+  }
+  // coyote score per chunk
+  const n = c.d.coyote.length;
+  g.fillStyle = '#1F2A22'; g.textAlign = 'right'; g.fillText('Coyote', P.x0 - 6, P.coyY + L.coyote / 2);
+  g.fillStyle = '#F7F9F5'; g.fillRect(P.x0, P.coyY, P.x1 - P.x0, L.coyote);
+  for (let k = 0; k < n; k++) {
+    const xa = X(k * cs), xb = X((k + 1) * cs); if (xb <= xa) continue;
+    const v = c.d.coyote[k], h = (L.coyote - 4) * v;
+    g.fillStyle = c.d.moments[k] ? '#6E8B4E' : '#C9D6BE';
+    g.fillRect(xa + 1, P.coyY + L.coyote - 2 - h, Math.max(1, xb - xa - 2), Math.max(1, h));
+  }
+  // one lane per sound: each chunk's chance (shade), and the sheet's sound times (bars)
+  S.tags.forEach((t, j) => {
+    const y = P.laneY + j * L.lane, on = c.inGuess.has(t), col = COLORS[t];
+    g.fillStyle = on ? '#1F2A22' : '#8A958C'; g.font = `${on ? 'bold ' : ''}12px Calibri, Carlito, "Segoe UI", sans-serif`;
+    g.textAlign = 'right'; g.fillText(t, P.x0 - 6, y + L.lane / 2);
+    for (let k = 0; k < n; k++) {
+      const xa = X(k * cs), xb = X((k + 1) * cs); if (xb <= xa) continue;
+      if (!c.d.moments[k]) { hatch(g, xa, y + 1, xb - xa, L.lane - 2); continue; }
+      g.globalAlpha = Math.max(0.04, c.d.chunk_chance[t][k]) * (on ? 0.55 : 0.3);
+      g.fillStyle = col; g.fillRect(xa, y + 1, xb - xa, L.lane - 2); g.globalAlpha = 1;
+    }
+    g.strokeStyle = '#E6EAE2'; g.lineWidth = 1; g.strokeRect(P.x0 + .5, y + .5, P.x1 - P.x0 - 1, L.lane - 1);
+    for (const s of (c.loose[t] || [])) { g.strokeStyle = col; g.lineWidth = 2; g.strokeRect(X(s.a) + 1, y + 2, X(s.b) - X(s.a) - 2, L.lane - 4); }
+    for (const s of (c.strict[t] || [])) {
+      g.fillStyle = col; g.fillRect(X(s.a) + 1, y + 4, X(s.b) - X(s.a) - 2, L.lane - 8);
+      if (s.strongest) label(g, 'strongest', X(s.b) + 4, y + L.lane / 2, col, true);
+    }
+  });
+  g.font = '12px Calibri, Carlito, "Segoe UI", sans-serif';
+  // time axis
+  g.fillStyle = '#5E6B62'; g.textAlign = 'center';
+  const step = [1, 2, 5, 10, 15, 30, 60, 120, 300].find(s => (P.x1 - P.x0) / (D / s) >= 60) || 600;
+  for (let t = 0; t <= D + 1e-6; t += step) {
+    const x = X(t); g.fillRect(x, P.axisY - 2, 1, 5);
+    g.fillText(`${Math.floor(t / 60)}:${String(Math.round(t % 60)).padStart(2, '0')}`, x, P.axisY + 12);
+  }
+  // playhead
+  const at = $('audio').currentTime || 0;
+  if (at > 0) { g.fillStyle = '#B8732F'; g.fillRect(X(at) - 1, P.specY - 6, 2, P.axisY - P.specY + 6); }
+  $('clock').textContent = `${mmss(at)} / ${mmss(D)}`;
+}
+function label(g, text, x, y, col, plain) {
+  g.font = '12px Calibri, Carlito, "Segoe UI", sans-serif'; g.textAlign = 'left';
+  if (!plain) { const w = g.measureText(text).width + 8; g.fillStyle = 'rgba(255,255,255,.88)'; g.fillRect(x - 4, y - 8, w, 16); }
+  g.fillStyle = col; g.fillText(text, x, y);
+}
+function hatch(g, x, y, w, h) {
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.fillStyle = '#FFFFFF'; g.fillRect(x, y, w, h);
+  g.strokeStyle = '#E2E6DF'; g.lineWidth = 1;
+  for (let k = -h; k < w; k += 5) { g.beginPath(); g.moveTo(x + k, y + h); g.lineTo(x + k + h, y); g.stroke(); }
+  g.restore();
+}
+const cv = $('canvas');
+cv.addEventListener('mousemove', e => {
+  const c = S.cur; if (!c) return;
+  const P = layout(cv.clientWidth), r = cv.getBoundingClientRect(), x = e.clientX - r.left;
+  if (x < P.x0 || x > P.x1) return;
+  const t = (x - P.x0) / (P.x1 - P.x0) * c.duration, k = Math.min(c.d.coyote.length - 1, Math.floor(t / c.d.chunk_seconds));
+  const a = k * c.d.chunk_seconds;
+  $('readout').innerHTML = `<b>${mmss(t)}</b> · chunk ${Math.floor(a / 60)}:${String(a % 60).padStart(2, '0')}–${Math.floor((a + 3) / 60)}:${String((a + 3) % 60).padStart(2, '0')} · Coyote score ${num(c.d.coyote[k], 2)} · `
+    + (c.d.moments[k] ? S.tags.map(tag => `${tag} ${Math.round(100 * c.d.chunk_chance[tag][k])}%`).join(' · ') : 'not a coyote moment, so not used');
+});
+cv.addEventListener('click', e => {
+  const c = S.cur; if (!c || !c.file) return;
+  const P = layout(cv.clientWidth), r = cv.getBoundingClientRect(), x = e.clientX - r.left;
+  if (x < P.x0 || x > P.x1) return;
+  const audio = $('audio'); audio.currentTime = (x - P.x0) / (P.x1 - P.x0) * c.duration; audio.play(); $('play').textContent = '❚❚'; tick();
+});
+function togglePlay() {
+  const audio = $('audio'); if (!audio.src) return;
+  if (audio.paused) { audio.play(); $('play').textContent = '❚❚'; tick(); } else { audio.pause(); $('play').textContent = '▶'; }
+}
+$('play').onclick = togglePlay;
+$('audio').onended = () => { $('play').textContent = '▶'; draw(); };
+function tick() { draw(); if (!$('audio').paused) requestAnimationFrame(tick); }
+window.addEventListener('resize', () => draw());
+
+pollStatus();
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+# Packages for the notebook YipNET.ipynb (and the app). Python 3.13. Install with:  pip install -r requirements.txt
+# Only want the app? Double-click START_YipNET_Windows.bat / START_YipNET_Mac.command (they use requirements-app.txt).
+#
+# Exact versions are pinned where the project has recorded them (birdnet, tensorflow, librosa);
+# the others are minimum versions.
+
+# BirdNET encoder (Section 2): installs the BirdNET acoustic model v2.4 on first use
+birdnet==1.4.0
+
+# TensorFlow and Keras: the two-layer head (Section 4) and BirdNET's TensorFlow backend
+tensorflow==2.21.0
+keras>=3.0
+
+# data, models and scoring
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.3
+scipy>=1.11
+
+# audio: clip lengths (soundfile) and the longest-howl pitch tracker (librosa's pyin)
+soundfile>=0.12
+librosa==1.0.0
+
+# reading the label spreadsheets and writing the best-guess spreadsheet
+openpyxl>=3.1
+
+# saving the final tool for the demo app (notebook) and reading it back (app)
+cloudpickle>=3.0
+
+# the demo app's local web page
+flask>=3.0
+
+# running the notebook in Jupyter / VS Code
+ipykernel>=6.0

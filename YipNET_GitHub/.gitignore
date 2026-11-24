@@ -1,0 +1,21 @@
+# Allow-list: ignore everything, then allow only the files below. Recordings, spreadsheets, BirdNET caches, the
+# old private environment folder (.yipnet_env), outputs and demo_app/final_tool_local.pkl (a model saved on your own data, which
+# holds your recordings' BirdNET numbers) can never be committed by accident, even if they are in this folder.
+*
+!*/
+!.gitignore
+!.gitattributes
+!README.md
+!LICENSE
+!requirements.txt
+!requirements-app.txt
+!start_yipnet.py
+!START_YipNET_Windows.bat
+!START_YipNET_Mac.command
+!YipNET.ipynb
+!demo_app/app.py
+!demo_app/index.html
+!demo_app/README.md
+!demo_app/final_tool.pkl
+!demo_sounds/tone.wav
+!demo_sounds/white_noise.wav

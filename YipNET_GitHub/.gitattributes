@@ -1,0 +1,6 @@
+# Keep each launcher's line endings whatever computer commits or checks out the repository
+*.bat       text eol=crlf
+*.command   text eol=lf
+*.py        text eol=lf
+*.pkl       binary
+*.wav       binary

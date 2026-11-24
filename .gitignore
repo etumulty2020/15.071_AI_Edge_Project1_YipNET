@@ -1,0 +1,31 @@
+# YipNET_GitHub_Final/.gitignore  (repo root = this folder)
+# Allow-list: ignore everything, then allow only the project files listed below.
+# Recordings, label spreadsheets, BirdNET caches, private environments, outputs, zips,
+# macOS clutter (.DS_Store, __MACOSX) and demo_app/final_tool_local.pkl (a model saved on
+# your own data) can never be committed by accident, even if they are in this folder.
+*
+!*/
+!.gitignore
+
+# macOS clutter, even inside allowed folders
+.DS_Store
+__MACOSX/
+._*
+
+# Project files
+!YipNET_GitHub/.gitignore
+!YipNET_GitHub/.gitattributes
+!YipNET_GitHub/README.md
+!YipNET_GitHub/LICENSE
+!YipNET_GitHub/requirements.txt
+!YipNET_GitHub/requirements-app.txt
+!YipNET_GitHub/start_yipnet.py
+!YipNET_GitHub/START_YipNET_Windows.bat
+!YipNET_GitHub/START_YipNET_Mac.command
+!YipNET_GitHub/YipNET.ipynb
+!YipNET_GitHub/demo_app/app.py
+!YipNET_GitHub/demo_app/index.html
+!YipNET_GitHub/demo_app/README.md
+!YipNET_GitHub/demo_app/final_tool.pkl
+!YipNET_GitHub/demo_sounds/tone.wav
+!YipNET_GitHub/demo_sounds/white_noise.wav
